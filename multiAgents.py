@@ -169,7 +169,54 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(0)
+        currScore = -10000
+        returnAction = ''
+        
+        #return the value for the min part of minimax
+        def mini(gameState, depth, agentIndex):
+            val = 10000
+            #check if we finished
+            if gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+            
+            actions = gameState.getLegalActions(agentIndex)
+            #go through each possible action
+            for action in actions:
+                successor = gameState.generateSuccessor(agentIndex, action)
+                #for pacman
+                if agentIndex == (gameState.getNumAgents() - 1):
+                    val = min(val, maximum(successor, depth))
+                else:
+                    val = min(val,mini(successor,depth,agentIndex+1))   
+            return val
+
+        #return the value for the max part of minimax
+        def maximum(gameState, depth):
+            val = -10000
+            #update depth in the max part (one level deeper)
+            currentDepth = depth + 1
+            #check if we are at the end
+            #since we update depth in maximum, 
+            if gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
+                return self.evaluationFunction(gameState)
+
+            actions = gameState.getLegalActions(0)
+            #go through each possible action
+            for action in actions:
+                successor = gameState.generateSuccessor(0, action)
+                val = max(val, mini(successor, currentDepth, 1))
+            return val
+        #go through each action, find the one with minimax highest score
+        #return the action that produces highest score
+        for action in actions:
+            nextState = gameState.generateSuccessor(0, action)
+            score = mini(nextState, 0, 1)
+            #update score
+            if score > currScore:
+                returnAction = action
+                currScore = score
+        return returnAction
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
