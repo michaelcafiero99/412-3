@@ -243,7 +243,94 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+          """
+        Returns the minimax action using self.depth and self.evaluationFunction
+        """
+        "*** YOUR CODE HERE ***"
+
+        def getMax(gameState, depth, a, b):
+            # if the game is over
+            # if gameState.isWin() or gameState.isLose() or depth == self.depth:
+            # return self.evaluationFunction(gameState)  # return the evaluation of the current game state
+
+            if gameState.isWin() == False and gameState.isLose() == False and depth != self.depth:
+                negative_infinity = float("-inf")
+                val = negative_infinity  # sets the placeholder value equal to negative infinity to be updated
+                moves = gameState.getLegalActions(0)
+                for possible_move in moves:
+                    successor = gameState.generateSuccessor(0, possible_move)
+                    minimum = getMin(successor, depth, 1, a, b)
+                    val = max(val, minimum)
+                    #  prune accordingly
+                    if b < val:
+                        break
+                    #  continue loop and update max
+                    else:
+                        a = max(val, a)
+
+                return val
+
+            else:
+                return self.evaluationFunction(gameState)
+
+        #  ---------------------------------------
+        def getMin(gameState, depth, ind, a, b):
+
+            if gameState.isWin() or gameState.isLose() or depth == self.depth:
+                return self.evaluationFunction(gameState)
+
+            temp = float("inf")
+
+            if gameState.isWin() == False and gameState.isLose() == False and depth != self.depth:
+                # negative_infinity = float("-inf")
+                # val = negative_infinity  # sets the placeholder value equal to negative infinity to be updated
+                moves = gameState.getLegalActions(ind)
+                infinity = float("inf")
+                val = infinity
+
+                for possible_move in moves:
+                    successor = gameState.generateSuccessor(ind, possible_move)
+
+                    if gameState.getNumAgents() != ind + 1:
+                        minimum = getMin(successor, depth, ind + 1, a, b)
+                        val = min(val, minimum)
+
+                    if gameState.getNumAgents() == ind + 1:
+                        maximum = getMax(successor, depth + 1, a, b)
+                        val = min(val, maximum)
+
+                    if val < a:
+                        break
+
+                    else:
+                        b = min(b, val)
+                return val
+
+            else:
+                return self.evaluationFunction(gameState)
+
+        negative_infinity = float("-inf")
+        infinity = float("inf")
+        a = negative_infinity
+        b = infinity
+        val = negative_infinity
+
+        moves = gameState.getLegalActions(0)
+        #  temp = 0
+        return_val = 0
+
+        for possible_move in moves:
+            successor = gameState.generateSuccessor(0, possible_move)
+            minimum = getMin(successor, 0, 1, a, b)
+
+            if minimum > val:
+                return_val = possible_move
+                val = minimum
+                a = max(minimum, a)
+
+        return return_val
+
+
 
 def betterEvaluationFunction(currentGameState):
     """
