@@ -173,7 +173,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         currScore = -10000
         returnAction = ''
         
-        #return the value for the min part of minimax
+        #return the val for the min part of minimax
         def mini(gameState, depth, agentIndex):
             val = 10000
             #check if we finished
@@ -184,28 +184,28 @@ class MinimaxAgent(MultiAgentSearchAgent):
             #go through each possible action
             for action in actions:
                 successor = gameState.generateSuccessor(agentIndex, action)
-                #for pacman
+                
                 if agentIndex == (gameState.getNumAgents() - 1):
                     val = min(val, maximum(successor, depth))
                 else:
                     val = min(val,mini(successor,depth,agentIndex+1))   
             return val
 
-        #return the value for the max part of minimax
+        #return the val for the max part of minimax
         def maximum(gameState, depth):
             val = -10000
             #update depth in the max part (one level deeper)
-            currentDepth = depth + 1
+            currDepth = depth + 1
             #check if we are at the end
-            #since we update depth in maximum, 
-            if gameState.isWin() or gameState.isLose() or currentDepth == self.depth:
+            #since we update depth in maximum
+            if gameState.isWin() or gameState.isLose() or currDepth == self.depth:
                 return self.evaluationFunction(gameState)
 
             actions = gameState.getLegalActions(0)
             #go through each possible action
             for action in actions:
                 successor = gameState.generateSuccessor(0, action)
-                val = max(val, mini(successor, currentDepth, 1))
+                val = max(val, mini(successor, currDepth, 1))
             return val
         #go through each action, find the one with minimax highest score
         #return the action that produces highest score
@@ -228,7 +228,81 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        #return the val for the min part of AB
+        def mini(gameState, depth, agentIndex, a, b):
+            val = 10000
+            #check if we finished
+            if gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+            newBeta = b
+
+            actions = gameState.getLegalActions(agentIndex)
+            #go though each possible action
+            for action in actions:
+                successor= gameState.generateSuccessor(agentIndex, action)
+                
+                if agentIndex == (gameState.getNumAgents() - 1):
+                    val = min (val, maximum(successor, depth, a, newBeta))
+                    #prune
+                    if val < a:
+                        return val
+                    newBeta = min(newBeta, val)
+                else:
+                    val = min(val, mini(successor, depth, agentIndex + 1, a, newBeta))
+                    #prune
+                    if val < a:
+                        return val
+                    #update beta
+                    newBeta = min(newBeta, val)
+            
+            return val
+
+        #return the val for the max part of AB
+        def maximum(gameState, depth, a, b):
+            val = -10000
+            #update depth in the max part (one level deeper)
+            currDepth = depth + 1
+            #check if we are at the end
+            #since we update depth in maximum
+            if gameState.isWin() or gameState.isLose() or currDepth == self.depth:
+                return self.evaluationFunction(gameState)
+            newAlpha = a
+
+            actions = gameState.getLegalActions(0)
+            #go through each possible action
+            for action in actions:
+                successor = gameState.generateSuccessor(0, action)
+                val = max (val, mini(successor, currDepth, 1, newAlpha, b))
+                #prune if possible and update aplha
+                if val > b:
+                    return val
+                newAlpha = max(newAlpha, val)
+            return val
+        
+        #Pruning
+        a = -10000
+        b = 10000
+        currScore = -10000
+        returnAction = ''
+        actions = gameState.getLegalActions(0)
+
+        #same as minimax
+        #go through each action, find the one with minimax highest score
+        #return the action that produces highest score
+        for action in actions:
+            nextState = gameState.generateSuccessor(0, action)
+            score = mini(nextState, 0, 1, a, b)
+            #update score
+            if score > currScore:
+                returnAction = action
+                currScore = score
+            #prune
+            if score > b:
+                return returnAction
+            a = max(a, score)
+        return returnAction
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -237,98 +311,52 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
     def getAction(self, gameState):
         """
-        Returns the expectimax action using self.depth and self.evaluationFunction
-
-        All ghosts should be modeled as choosing uniformly at random from their
-        legal moves.
+          Returns the expectimax action using self.depth and self.evaluationFunction
+          All ghosts should be modeled as choosing uniformly at random from their
+          legal moves.
         """
         "*** YOUR CODE HERE ***"
-          """
-        Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
+        # a little different implementation than ab or minimax that my partner did
+        def expectimax(state, depth, agent):
+            
+            #if it is a terminal node, or there are no more actions
+            if state.isWin() or state.isLose() or depth == self.depth or state.getLegalActions(agent) == 0:
+                return (self.evaluationFunction(state), None)
+            #For pacman
+            if agent == 0:
+                val = -10000
+                for action in state.getLegalActions(agent):
+                    #get all the succesors
+                    #doing mod here in case there isnt a ghost, not sure if this is an edge case we shoult worry about
+                    newVal = expectimax(state.generateSuccessor(agent, action), depth, (agent + 1) % state.getNumAgents())[0]
+                    #see if the successor val is better than current
+                    if newVal > val :
+                        val = newVal
+                        maxAction = action
+                #Return the val and the action from which we found
+                return (val, maxAction)  
 
-        def getMax(gameState, depth, a, b):
-            # if the game is over
-            # if gameState.isWin() or gameState.isLose() or depth == self.depth:
-            # return self.evaluationFunction(gameState)  # return the evaluation of the current game state
-
-            if gameState.isWin() == False and gameState.isLose() == False and depth != self.depth:
-                negative_infinity = float("-inf")
-                val = negative_infinity  # sets the placeholder value equal to negative infinity to be updated
-                moves = gameState.getLegalActions(0)
-                for possible_move in moves:
-                    successor = gameState.generateSuccessor(0, possible_move)
-                    minimum = getMin(successor, depth, 1, a, b)
-                    val = max(val, minimum)
-                    #  prune accordingly
-                    if b < val:
-                        break
-                    #  continue loop and update max
-                    else:
-                        a = max(val, a)
-
-                return val
-
+            #For Ghost           
             else:
-                return self.evaluationFunction(gameState)
-
-        #  ---------------------------------------
-        def getMin(gameState, depth, ind, a, b):
-
-            if gameState.isWin() or gameState.isLose() or depth == self.depth:
-                return self.evaluationFunction(gameState)
-
-            temp = float("inf")
-
-            if gameState.isWin() == False and gameState.isLose() == False and depth != self.depth:
-                # negative_infinity = float("-inf")
-                # val = negative_infinity  # sets the placeholder value equal to negative infinity to be updated
-                moves = gameState.getLegalActions(ind)
-                infinity = float("inf")
-                val = infinity
-
-                for possible_move in moves:
-                    successor = gameState.generateSuccessor(ind, possible_move)
-
-                    if gameState.getNumAgents() != ind + 1:
-                        minimum = getMin(successor, depth, ind + 1, a, b)
-                        val = min(val, minimum)
-
-                    if gameState.getNumAgents() == ind + 1:
-                        maximum = getMax(successor, depth + 1, a, b)
-                        val = min(val, maximum)
-
-                    if val < a:
-                        break
-
+                #keep track of total and counter to find average
+                totalVal = 0
+                count = 0
+                for action in state.getLegalActions(agent):
+                    #same depth (this isnt the last ghost)
+                    if agent + 1 < state.getNumAgents():
+                        newVal = expectimax(state.generateSuccessor(agent, action), depth, agent + 1)[0]
+                    #otherwise, it is a new depth (last ghost)
                     else:
-                        b = min(b, val)
-                return val
+                        newVal = expectimax(state.generateSuccessor(agent, action), depth + 1, 0)[0]
 
-            else:
-                return self.evaluationFunction(gameState)
-
-        negative_infinity = float("-inf")
-        infinity = float("inf")
-        a = negative_infinity
-        b = infinity
-        val = negative_infinity
-
-        moves = gameState.getLegalActions(0)
-        #  temp = 0
-        return_val = 0
-
-        for possible_move in moves:
-            successor = gameState.generateSuccessor(0, possible_move)
-            minimum = getMin(successor, 0, 1, a, b)
-
-            if minimum > val:
-                return_val = possible_move
-                val = minimum
-                a = max(minimum, a)
-
-        return return_val
+                    #simple average
+                    totalVal += newVal
+                    count += 1
+                    minAction = action
+                    #Return the average val and the action 
+                return (totalVal/count, minAction)
+        #run this function
+        return expectimax(gameState, 0, 0)[1]
 
 
 
