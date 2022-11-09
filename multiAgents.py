@@ -68,47 +68,57 @@ class ReflexAgent(Agent):
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
-        # Useful information you can extract from a GameState (pacman.py)
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
+         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        food_list = newFood.asList() #list of coordinates of food
-        power_list = successorGameState.getCapsules()  # list of power pallets
-        ghost_list = []
-        for ghost in newGhostStates:
-            ghost_list.append(ghost.getPosition())
+        min_dist_G = 5000
+        min_dist_F = 5000
+        min_dist_P = 5000
 
-        "*** YOUR CODE HERE ***"
-        # good if its close to food
-        # great if its close to power
-        # great if its close to scared ghost
-        # bad if its close to ghost
-        min_distance_to_food = 10000
-        min_distance_to_power = 10000
-        min_distance_to_ghost = 10000
+        coordinates_ghost = []
+        coordinates_power = successorGameState.getCapsules()
+        coordinates_food = newFood.asList()
 
-        for food in food_list:
-            if manhattanDistance(newPos, food) < min_distance_to_food:
-                min_distance_to_food = manhattanDistance(newPos, food)
+        for i in range(len(newGhostStates)):
+            thisGhost = newGhostStates[i]
+            coordinates = thisGhost.getPosition()
+            coordinates_ghost.append(coordinates)
 
-        for power in power_list:
-            if manhattanDistance(newPos, power) < min_distance_to_power:
-                min_distance_to_power = manhattanDistance(newPos, power)
+        for i in range(len(coordinates_food)):
+            this_coord = coordinates_food[i]
+            if not manhattanDistance(newPos, this_coord) >= min_dist_F:
+                min_dist_F = manhattanDistance(newPos, this_coord)
+            else:
+                continue
 
-        for ghost in ghost_list:
-            if manhattanDistance(newPos, ghost) < min_distance_to_ghost:
-                min_distance_to_ghost = manhattanDistance(newPos, ghost)
-        if min_distance_to_ghost < 2:
-            return -10000
-        if action == "STOP":
-            return -10000
-        score = -35 * len(power_list) - 30 * len(food_list) + 3 / min_distance_to_food + 5 / min_distance_to_power
-        return score
-        #return successorGameState.getScore()
+        for i in range(len(coordinates_ghost)):
+            this_ghost = coordinates_ghost[i]
+
+            if not manhattanDistance(newPos, this_ghost) >= min_dist_P:
+                min_dist_G = manhattanDistance(newPos, this_ghost)
+            else:
+                continue
+
+        for i in range(len(coordinates_power)):
+            this_power = coordinates_power[i]
+            if not manhattanDistance(newPos, this_power) >= min_dist_P:
+                min_dist_P = manhattanDistance(newPos, this_power)
+            else:
+                continue
+
+
+        if 2 > min_dist_G:
+            return -5000
+
+        else:
+            score_power = len(coordinates_power) * (-35)
+            score_food = len(coordinates_food) * (-30)
+            score_dist = 3 / min_dist_F + 5 / min_dist_P
+            total_score = score_power + score_food + score_dist
+            return total_score
+
 
 def scoreEvaluationFunction(currentGameState):
     """
