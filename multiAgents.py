@@ -371,14 +371,29 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
 
 def betterEvaluationFunction(currentGameState):
+        """
+    This function uses manhattanDistance as its simple heuristic. It takes the current game state as an input and
+    accounts for the closest ghost, and food, and the score.
     """
-    Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
-    evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
-    """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    newPos = currentGameState.getPacmanPosition()
+    currentFood = currentGameState.getFood().asList()
+    ghostDistance = 5000
+    foodDistance = 5000
+    currentScore = currentGameState.getScore()
+
+    if currentFood:
+        for thisFood in currentFood:
+            updateDistance = manhattanDistance(thisFood, newPos)
+            foodDistance = min(foodDistance, updateDistance)
+
+
+    isFood = 1
+    if len(currentFood) == 0:
+        isFood = 0
+
+
+    return currentScore - 5/ghostDistance - foodDistance/3 * isFood
 
 # Abbreviation
 better = betterEvaluationFunction
